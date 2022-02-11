@@ -123,6 +123,7 @@ func initServerResetInfo(database *sql.DB) *ServerResetInfo {
 
 	var lastServerReset ServerResetInfo
 
+	fmt.Println("Looking for entry in database...")
 	entryExists, lastServerReset := queryDBForLastServerReset(database)
 
 	if !entryExists {
@@ -131,6 +132,7 @@ func initServerResetInfo(database *sql.DB) *ServerResetInfo {
 			LastResetTimeUnix: time.Now().Unix(),
 			LastServerUptime:  0,
 		}
+		fmt.Println("Could not find entry in database")
 	}
 
 	return &lastServerReset
