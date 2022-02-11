@@ -1,10 +1,8 @@
-package js5client
+package main
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
 	"strconv"
 	"time"
 )
@@ -71,14 +69,4 @@ func addNewServerResetInfo(serverResetInfo ServerResetInfo, database *sql.DB) {
 		err = createAndLogCustomError(err, "Error adding to db in addNewServerResetInfo.")
 	}
 
-}
-
-// ------------------------------------------------------------------------- //
-// --------------------------- Helper Functions ---------------------------- //
-// ------------------------------------------------------------------------- //
-
-func createAndLogCustomError(err error, message string) error {
-	newErr := fmt.Errorf(message+" %w", err)
-	log.Println(newErr)
-	return newErr
 }
