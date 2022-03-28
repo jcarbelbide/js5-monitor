@@ -53,7 +53,8 @@ func getLastReset(w http.ResponseWriter, r *http.Request) {
 
 func consoleLoop() {
 
-	js5, err := js5connection.New()
+	js5Addr1 := "oldschool2.runescape.com:43594"
+	js5, err := js5connection.New(js5Addr1)
 	fmt.Println(err)
 	//fmt.Println(js5.Ping())
 
@@ -85,28 +86,58 @@ func MonitorJS5() {
 
 	LastServerResetInfo = initServerResetInfo(db)
 
+	js5AddrList := []string{
+		"oldschool2.runescape.com:43594",
+		"oldschool143.runescape.com:43594",
+		"oldschool128.runescape.com:43594",
+	}
+
 	for { // Infinite Loop
 		time.Sleep(js5connection.PingInterval)
-		js5, err := js5connection.New()
-		fmt.Println(&js5)
-
+		js5connList, err := js5connection.CreateJS5ConnectionsFromURLs(js5AddrList)
+		log.Println(js5connList)
 		if err != nil {
 			// Start over by trying a new connection
 			continue
 		}
 
 		for { // Pinging Loop. Ping until connection drops
-			_, err := js5.Ping()
+			_, err := js5connList[0].Ping()
 			if err != nil {
 				break
 			}
 
 			// For testing:
-			//if requestKeyboardInput() {break}
+			//if requestKeyboardInput() {
+			//	break
+			//}
 
 			time.Sleep(js5connection.PingInterval)
 		}
+		log.Println("JS5 Connection broken!")
 
+		// If we broke from the loop, that means one of the connections ([0]) broke.
+		// Check the rest of the connections, after the first. If any of them DON'T return an error after Ping(),
+		// that means that the error may have been a false positive. Don't log the new time, and start over by
+		// creating new connections.
+		noErrorsOnAtLeastOneConnection := false
+		for i := 1; i < len(js5connList); i++ {
+
+			_, err := js5connList[i].Ping()
+			if err == nil { // Here, we want to actually check if errors ARE nil.
+				// If any ARE nil, everything is probably fine, and we restart the loop with new connections.
+				noErrorsOnAtLeastOneConnection = true
+				break
+			}
+		}
+		if noErrorsOnAtLeastOneConnection {
+			log.Println("Other connections were fine. Restart without logging new time")
+			continue
+		}
+
+		log.Println("Logging new time")
+
+		// If we made it here, that means all the connections were broken (all errors were not nil)
 		currentServerResetInfo := ServerResetInfo{
 			LastResetTime:     time.Now(),
 			LastResetTimeUnix: time.Now().Unix(),
@@ -123,7 +154,7 @@ func initServerResetInfo(database *sql.DB) *ServerResetInfo {
 
 	var lastServerReset ServerResetInfo
 
-	fmt.Println("Looking for entry in database...")
+	log.Println("Looking for entry in database...")
 	entryExists, lastServerReset := queryDBForLastServerReset(database)
 
 	if !entryExists { // entry does not exist in db
@@ -132,7 +163,7 @@ func initServerResetInfo(database *sql.DB) *ServerResetInfo {
 			LastResetTimeUnix: time.Now().Unix(),
 			LastServerUptime:  0,
 		}
-		fmt.Println("Could not find entry in database")
+		log.Println("Could not find entry in database")
 		addNewServerResetInfo(lastServerReset, db)
 	}
 
