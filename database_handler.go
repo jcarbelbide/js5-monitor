@@ -2,8 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
 	"strconv"
 	"time"
 )
@@ -55,7 +55,7 @@ func queryDBForLastServerReset(database *sql.DB) (bool, ServerResetInfo) {
 			LastServerUptime:  int64LastServerUptime,
 		}
 		numberOfEntries++
-		log.Println("Finding rows: ", numberOfEntries, serverResetInfo)
+		fmt.Println("Finding rows: ", numberOfEntries, serverResetInfo)
 	}
 
 	entryExistsInDB := numberOfEntries == 1

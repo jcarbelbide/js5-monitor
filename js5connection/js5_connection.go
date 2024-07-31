@@ -3,7 +3,6 @@ package js5connection
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"net"
 	"time"
 )
@@ -113,19 +112,19 @@ func (c *js5conn) writePID() error {
 
 	err := c.writeByte(1)
 	if err != nil {
-		log.Println("writePID Code 1")
+		fmt.Println("writePID Code 1")
 		return err
 	}
 
 	err = c.writeByte(pid >> 16)
 	if err != nil {
-		log.Println("writePID Code 2")
+		fmt.Println("writePID Code 2")
 		return err
 	}
 
 	err = c.writeByte(pid >> 8)
 	if err != nil {
-		log.Println("writePID Code 3")
+		fmt.Println("writePID Code 3")
 		return err
 	}
 
@@ -138,7 +137,8 @@ func intToByteArray(num int) []byte {
 	return []byte{byte(num)}
 }
 
-func createNewJS5Connection(addr string) (*js5conn, error) {
+func createNewJS5Connection() (*js5conn, error) {
+	addr := "oldschool2.runescape.com:43594"
 	conn, err := net.Dial("tcp", addr)
 	var c = js5conn{
 		conn:    conn,
@@ -152,15 +152,15 @@ func createNewBuffer() []byte {
 	return make([]byte, 0xFFFF)
 }
 
-func createJS5Connection(rev int, addr string) (*js5conn, error) {
+func createJS5Connection(rev int) (*js5conn, error) {
 
 	var c *js5conn
 	var err error
 	var status []byte
 	for i := 0; ; i++ {
-		c, err = createNewJS5Connection(addr)
+		c, err = createNewJS5Connection()
 		if err != nil {
-			log.Println(err.Error())
+			fmt.Println(err.Error())
 			return nil, err
 		}
 
@@ -175,35 +175,16 @@ func createJS5Connection(rev int, addr string) (*js5conn, error) {
 
 		if bytes.Compare(status, revMismatch) == 0 {
 			rev++
-			log.Println("Got rev mismatch, bumping to ", rev)
+			fmt.Println("Got rev mismatch, bumping to ", rev)
 			continue
 		}
 
 		return nil, fmt.Errorf("failed to create JS5 Connection %w", err)
 	}
-	log.Println("Rev settled on: ", rev)
+	fmt.Println("Rev settled on: ", rev)
 	return c, nil
 }
 
-func CreateJS5ConnectionsFromURLs(js5AddrList []string) ([]*js5conn, error) {
-
-	var connections []*js5conn
-
-	for _, addr := range js5AddrList {
-		log.Println("Trying " + addr)
-
-		js5, err := New(addr)
-		if err != nil {
-			// If there is an error, return nil and an error
-			return nil, err
-		}
-
-		connections = append(connections, js5)
-	}
-
-	return connections, nil
-}
-
-func New(addr string) (*js5conn, error) {
-	return createJS5Connection(js5Rev, addr)
+func New() (*js5conn, error) {
+	return createJS5Connection(js5Rev)
 }
