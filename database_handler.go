@@ -53,6 +53,7 @@ func queryDBForLastServerReset(database *sql.DB) (bool, ServerResetInfo) {
 			LastResetTime:     time.Unix(int64LastResetTimeUnix, 0),
 			LastResetTimeUnix: int64LastResetTimeUnix,
 			LastServerUptime:  int64LastServerUptime,
+			Version:           AppVersion,
 		}
 		numberOfEntries++
 		log.Println("Finding rows: ", numberOfEntries, serverResetInfo)
