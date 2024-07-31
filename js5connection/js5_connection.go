@@ -2,7 +2,8 @@ package js5connection
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/pkg/errors"
+	"log"
 	"net"
 	"time"
 )
@@ -26,8 +27,7 @@ type js5conn struct {
 
 const (
 	PingInterval time.Duration = 5000 * time.Millisecond
-	js5Rev       int           = 203
-	// TODO: Put this in a file and uprev file when new rev detected
+	js5Rev       int           = 223
 )
 
 var (
@@ -81,6 +81,15 @@ func (c *js5conn) WriteJS5Header(rev int) ([]byte, error) {
 		return nil, err
 	}
 
+	for i := 0; i < 4; i++ {
+		// Why we do this, I don't know, but it's done here:
+		// https://github.com/abextm/runelite-cache-code-updater/commit/0598156b3d3b92ad03d3377246802357d0eaad31#diff-ddfc458da83e4bf5b4237fa3dcd08371adf8bb033ad9f2abf1a6fb24db029834R104
+		err = c.writeInt(0)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return c.read()
 
 }
@@ -112,20 +121,17 @@ func (c *js5conn) writePID() error {
 
 	err := c.writeByte(1)
 	if err != nil {
-		fmt.Println("writePID Code 1")
-		return err
+		return errors.Wrap(err, "writePID Code 1")
 	}
 
 	err = c.writeByte(pid >> 16)
 	if err != nil {
-		fmt.Println("writePID Code 2")
-		return err
+		return errors.Wrap(err, "writePID Code 2")
 	}
 
 	err = c.writeByte(pid >> 8)
 	if err != nil {
-		fmt.Println("writePID Code 3")
-		return err
+		return errors.Wrap(err, "writePID Code 3")
 	}
 
 	err = c.writeByte(pid)
@@ -160,7 +166,6 @@ func createJS5Connection(rev int) (*js5conn, error) {
 	for i := 0; ; i++ {
 		c, err = createNewJS5Connection()
 		if err != nil {
-			fmt.Println(err.Error())
 			return nil, err
 		}
 
@@ -175,13 +180,15 @@ func createJS5Connection(rev int) (*js5conn, error) {
 
 		if bytes.Compare(status, revMismatch) == 0 {
 			rev++
-			fmt.Println("Got rev mismatch, bumping to ", rev)
+			log.Println("Got rev mismatch, bumping to ", rev)
 			continue
 		}
 
-		return nil, fmt.Errorf("failed to create JS5 Connection %w", err)
+		return nil, errors.Wrap(err, "failed to create JS5 Connection")
 	}
-	fmt.Println("Rev settled on: ", rev)
+
+	log.Println("Rev settled on: ", rev)
+
 	return c, nil
 }
 

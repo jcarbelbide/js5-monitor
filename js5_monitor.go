@@ -54,7 +54,9 @@ func getLastReset(w http.ResponseWriter, r *http.Request) {
 func consoleLoop() {
 
 	js5, err := js5connection.New()
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	//fmt.Println(js5.Ping())
 
 	var loopCounter float64 = 0
@@ -74,13 +76,13 @@ func consoleLoop() {
 
 // MonitorJS5
 //  1. Start by initializing db and getting the first server reset. If it's the first time, just set time to now.
-//	2. Initialize JS5 Connection. If it fails to connect, keep trying. Server may be down.
-//		3. Ping the connection every 5 seconds in a new loop.
-//		4. If the connection breaks, break out of current loop
-//	5. Be sure to take the difference between the time for last reset and current reset.
-//	6. Write to DB
-//	7. Set LastServerResetInfo to current one.
-//	8. restart loop at step 2.
+//  2. Initialize JS5 Connection. If it fails to connect, keep trying. Server may be down.
+//  3. Ping the connection every 5 seconds in a new loop.
+//  4. If the connection breaks, break out of current loop
+//  5. Be sure to take the difference between the time for last reset and current reset.
+//  6. Write to DB
+//  7. Set LastServerResetInfo to current one.
+//  8. restart loop at step 2.
 func MonitorJS5() {
 
 	LastServerResetInfo = initServerResetInfo(db)
@@ -88,10 +90,9 @@ func MonitorJS5() {
 	for { // Infinite Loop
 		time.Sleep(js5connection.PingInterval)
 		js5, err := js5connection.New()
-		fmt.Println(&js5)
-
 		if err != nil {
 			// Start over by trying a new connection
+			log.Printf("Unable to create js5connection, retrying...: %s", err.Error())
 			continue
 		}
 
@@ -123,7 +124,7 @@ func initServerResetInfo(database *sql.DB) *ServerResetInfo {
 
 	var lastServerReset ServerResetInfo
 
-	fmt.Println("Looking for entry in database...")
+	log.Println("Looking for entry in database...")
 	entryExists, lastServerReset := queryDBForLastServerReset(database)
 
 	if !entryExists { // entry does not exist in db
@@ -132,7 +133,7 @@ func initServerResetInfo(database *sql.DB) *ServerResetInfo {
 			LastResetTimeUnix: time.Now().Unix(),
 			LastServerUptime:  0,
 		}
-		fmt.Println("Could not find entry in database")
+		log.Println("Could not find entry in database")
 		addNewServerResetInfo(lastServerReset, db)
 	}
 
