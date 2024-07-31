@@ -11,10 +11,13 @@ import (
 	"time"
 )
 
+const AppVersion = "20240730.1"
+
 type ServerResetInfo struct {
 	LastResetTime     time.Time `json:"reset_time"`
 	LastResetTimeUnix int64     `json:"last_reset_time_unix"`
 	LastServerUptime  int64     `json:"last_server_uptime"`
+	Version           string    `json:"version"`
 }
 
 var LastServerResetInfo *ServerResetInfo
@@ -143,6 +146,7 @@ func MonitorJS5() {
 			LastResetTime:     time.Now(),
 			LastResetTimeUnix: time.Now().Unix(),
 			LastServerUptime:  time.Now().Unix() - LastServerResetInfo.LastResetTimeUnix,
+			Version:           AppVersion,
 		}
 
 		addNewServerResetInfo(currentServerResetInfo, db)
@@ -163,6 +167,7 @@ func initServerResetInfo(database *sql.DB) *ServerResetInfo {
 			LastResetTime:     time.Now(),
 			LastResetTimeUnix: time.Now().Unix(),
 			LastServerUptime:  0,
+			Version:           AppVersion,
 		}
 		log.Println("Could not find entry in database")
 		addNewServerResetInfo(lastServerReset, db)
