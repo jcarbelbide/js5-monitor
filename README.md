@@ -1,10 +1,5 @@
 # js5-monitor
-Monitors the osrs servers for the weekly resets. Uses a JS5 connection on the following servers:
-<br/>
-
-"oldschool2.runescape.com:43594" (World 302) <br/>
-"oldschool143.runescape.com:43594" (World 443) <br/>
-"oldschool128.runescape.com:43594" (World 428) <br/>
+monitors the osrs servers for the weekly resets. Uses a JS5 connection
 
 ## Relevant Threads
 https://rune-server.org/threads/the-update-protocol.191916/
