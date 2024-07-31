@@ -143,8 +143,7 @@ func intToByteArray(num int) []byte {
 	return []byte{byte(num)}
 }
 
-func createNewJS5Connection() (*js5conn, error) {
-	addr := "oldschool2.runescape.com:43594"
+func createNewJS5Connection(addr string) (*js5conn, error) {
 	conn, err := net.Dial("tcp", addr)
 	var c = js5conn{
 		conn:    conn,
@@ -158,20 +157,20 @@ func createNewBuffer() []byte {
 	return make([]byte, 0xFFFF)
 }
 
-func createJS5Connection(rev int) (*js5conn, error) {
+func createJS5Connection(rev int, addr string) (*js5conn, error) {
 
 	var c *js5conn
 	var err error
 	var status []byte
 	for i := 0; ; i++ {
-		c, err = createNewJS5Connection()
+		c, err = createNewJS5Connection(addr)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "createNewJS5Connection")
 		}
 
 		status, err = c.WriteJS5Header(rev)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "WriteJS5Header")
 		}
 
 		if bytes.Compare(status, revMatch) == 0 {
@@ -192,6 +191,25 @@ func createJS5Connection(rev int) (*js5conn, error) {
 	return c, nil
 }
 
-func New() (*js5conn, error) {
-	return createJS5Connection(js5Rev)
+func CreateJS5ConnectionsFromURLs(js5AddrList []string) ([]*js5conn, error) {
+
+	var connections []*js5conn
+
+	for _, addr := range js5AddrList {
+		log.Println("Trying " + addr)
+
+		js5, err := New(addr)
+		if err != nil {
+			// If there is an error, return nil and an error
+			return nil, err
+		}
+
+		connections = append(connections, js5)
+	}
+
+	return connections, nil
+}
+
+func New(addr string) (*js5conn, error) {
+	return createJS5Connection(js5Rev, addr)
 }
