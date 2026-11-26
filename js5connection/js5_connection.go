@@ -27,7 +27,7 @@ type js5conn struct {
 
 const (
 	PingInterval time.Duration = 5000 * time.Millisecond
-	js5Rev       int           = 223
+	js5Rev       int           = 243
 )
 
 var (
@@ -127,6 +127,15 @@ func (c *js5conn) writePID() error {
 	err = c.writeByte(pid >> 16)
 	if err != nil {
 		return errors.Wrap(err, "writePID Code 2")
+	}
+
+	// Since rev 243 the archive id is 3 bytes instead of 2. Without this byte the
+	// server waits for the rest of the request, the ping times out, and the
+	// monitor records a false reset:
+	// https://github.com/abextm/runelite-cache-code-updater/commit/515fed030581e8bcb53e35ba29993a00990af30a
+	err = c.writeByte(0)
+	if err != nil {
+		return errors.Wrap(err, "writePID Code 2a")
 	}
 
 	err = c.writeByte(pid >> 8)
